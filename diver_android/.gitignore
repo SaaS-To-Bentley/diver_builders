@@ -1,0 +1,7 @@
+.gradle/
+build/
+diver/
+!gradle/wrapper/gradle-wrapper.jar
+.idea/
+*.iml
+.kotlin/

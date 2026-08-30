@@ -1,0 +1,32 @@
+{
+  "name": "diver-expo-builder",
+  "version": "0.1.0",
+  "description": "Aggregates Expo Router routes into diver/app_urls.json and uploads them to the Diver API. Also exports the defineDiverRoute metadata helper via the ./route subpath.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "diver-expo-builder": "dist/cli.js"
+  },
+  "exports": {
+    "./route": {
+      "types": "./dist/route.d.ts",
+      "default": "./dist/route.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0"
+  }
+}
