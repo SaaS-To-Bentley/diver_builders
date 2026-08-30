@@ -95,17 +95,11 @@ README for its exact prerequisites and options.
 
 ## Working in this repo
 
-`diver_flutter_builder` is a git submodule, so clone with:
-
-```sh
-git clone --recurse-submodules <this repo>
-```
-
-Everything else is a plain in-tree directory. Note that the two Flutter packages
-still reference each other the long way round: `diver_flutter_builder`'s examples
-depend on `diver_flutter_annotation` by git URL rather than a relative path, because
-the builder is a submodule and has to resolve on its own when cloned alone.
-
 Every package is self-contained — its own toolchain, its own README, its own
 `.gitignore` — and is developed and released independently. The root
 [`.gitignore`](.gitignore) only covers OS, editor, and local-config noise.
+
+Publishing to the public registries (pub.dev, npm, Maven Central) is driven by
+git tags via [`.github/workflows/release.yml`](.github/workflows/release.yml).
+See [RELEASING.md](RELEASING.md) for the tag conventions and the one-time
+setup needed on each registry.

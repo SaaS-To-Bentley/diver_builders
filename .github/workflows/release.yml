@@ -1,0 +1,98 @@
+name: Release
+
+# One workflow, one job per package. Each job only runs when a tag matching
+# its prefix is pushed, so pushing `expo-v0.1.1` only triggers the expo job.
+#
+# Tag conventions (see RELEASING.md):
+#   flutter-annotation-v<semver>  →  publishes diver_flutter_annotation to pub.dev
+#   flutter-builder-v<semver>     →  publishes diver_flutter_builder    to pub.dev
+#   expo-v<semver>                →  publishes @saas-to-bentley/diver-expo-builder to npm
+#   android-v<semver>             →  publishes io.github.saas-to-bentley:diver-android to Maven Central
+
+on:
+  push:
+    tags:
+      - "flutter-annotation-v*"
+      - "flutter-builder-v*"
+      - "expo-v*"
+      - "android-v*"
+
+jobs:
+  flutter-annotation:
+    if: startsWith(github.ref, 'refs/tags/flutter-annotation-v')
+    runs-on: ubuntu-latest
+    # pub.dev OIDC trusted-publisher: no secrets on GitHub side; the mapping
+    # is configured in the pub.dev package admin. `id-token: write` gives the
+    # workflow permission to request the OIDC token dart pub reads.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - name: Publish to pub.dev
+        working-directory: diver_flutter_annotation
+        run: |
+          dart pub get
+          dart pub publish --force
+
+  flutter-builder:
+    if: startsWith(github.ref, 'refs/tags/flutter-builder-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      # The builder pubspec declares `flutter` as a dev dependency, so we need
+      # the Flutter SDK on PATH even though the package itself is a pure Dart
+      # build_runner package.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Publish to pub.dev
+        working-directory: diver_flutter_builder
+        run: |
+          flutter pub get
+          flutter pub publish --force
+
+  expo-builder:
+    if: startsWith(github.ref, 'refs/tags/expo-v')
+    runs-on: ubuntu-latest
+    # npm provenance attestations require id-token: write.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: Publish to npm
+        working-directory: diver_expo_builder
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm publish
+
+  android:
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Publish to Maven Central
+        working-directory: diver_android
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
