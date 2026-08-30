@@ -95,6 +95,13 @@ README for its exact prerequisites and options.
 
 ## Working in this repo
 
+Every package is a plain in-tree directory, so a single `git clone` gets all of them.
+
+One leftover from when `diver_flutter_builder` was a submodule: its two example apps
+still depend on `diver_flutter_annotation` by git URL rather than a relative path.
+Now that both packages live here, they can use `path: ../../diver_flutter_annotation`
+instead.
+
 Every package is self-contained — its own toolchain, its own README, its own
 `.gitignore` — and is developed and released independently. The root
 [`.gitignore`](.gitignore) only covers OS, editor, and local-config noise.
