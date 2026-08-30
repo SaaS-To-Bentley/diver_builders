@@ -1,0 +1,12 @@
+name: diver_flutter_annotation
+description: >-
+  Annotations consumed by diver_flutter_builder. Provides @DiverRoute for
+  attaching a human-readable name and description to go_router route classes.
+version: 0.1.1
+publish_to: "none"
+
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  lints: ^5.0.0
