@@ -105,3 +105,8 @@ instead.
 Every package is self-contained — its own toolchain, its own README, its own
 `.gitignore` — and is developed and released independently. The root
 [`.gitignore`](.gitignore) only covers OS, editor, and local-config noise.
+
+Publishing to the public registries (pub.dev, npm, Maven Central) is driven by
+git tags via [`.github/workflows/release.yml`](.github/workflows/release.yml).
+See [RELEASING.md](RELEASING.md) for the tag conventions and the one-time
+setup needed on each registry.

@@ -50,8 +50,8 @@ plugins {
 }
 
 dependencies {
-    compileOnly("com.diver:diver-android:0.1.0") // the @DiverRoute annotation
-    ksp("com.diver:diver-android:0.1.0")         // the route-aggregating processor
+    compileOnly("io.github.saas-to-bentley:diver-android:0.1.0") // the @DiverRoute annotation
+    ksp("io.github.saas-to-bentley:diver-android:0.1.0")         // the route-aggregating processor
 }
 
 ksp {
@@ -108,7 +108,7 @@ The library ships an upload entrypoint (`com.diver.android.upload.UrlUploaderKt`
 
 ```kotlin
 val diverUploader by configurations.creating
-dependencies { diverUploader("com.diver:diver-android:0.1.0") }
+dependencies { diverUploader("io.github.saas-to-bentley:diver-android:0.1.0") }
 
 tasks.register<JavaExec>("diverUpload") {
     group = "diver"

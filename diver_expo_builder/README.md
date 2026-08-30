@@ -24,7 +24,7 @@ A runnable Expo app exercising all of these conventions lives in [example/](exam
 Add the package as a dev dependency in the consuming Expo app:
 
 ```sh
-npm install --save-dev ../diver_expo_builder
+npm install --save-dev @saas-to-bentley/diver-expo-builder
 ```
 
 A dev dependency is enough even though route files import the `defineDiverRoute` helper from it (see [Route metadata](#route-metadata)): Metro bundles that helper into your app at build time, so it doesn't need to be a runtime dependency.

@@ -64,12 +64,10 @@ Add the builder as a dev dependency and the annotation as a regular dependency i
 
 ```yaml
 dependencies:
-  diver_flutter_annotation:
-    path: ../diver_flutter_annotation
+  diver_flutter_annotation: ^0.1.1
 
 dev_dependencies:
-  diver_flutter_builder:
-    path: ../diver_flutter_builder
+  diver_flutter_builder: ^0.1.6
   build_runner: ^2.4.0
 ```
 
