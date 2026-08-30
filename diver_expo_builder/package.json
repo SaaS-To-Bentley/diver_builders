@@ -1,8 +1,9 @@
 {
-  "name": "diver-expo-builder",
+  "name": "@saas-to-bentley/diver-expo-builder",
   "version": "0.1.0",
   "description": "Aggregates Expo Router routes into diver/app_urls.json and uploads them to the Diver API. Also exports the defineDiverRoute metadata helper via the ./route subpath.",
-  "private": true,
+  "license": "MIT",
+  "author": "SaaS-To-Bentley",
   "type": "module",
   "bin": {
     "diver-expo-builder": "dist/cli.js"
@@ -14,7 +15,10 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -22,6 +26,26 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "keywords": [
+    "expo",
+    "expo-router",
+    "deeplink",
+    "diver",
+    "routing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SaaS-To-Bentley/diver_builders.git",
+    "directory": "diver_expo_builder"
+  },
+  "bugs": {
+    "url": "https://github.com/SaaS-To-Bentley/diver_builders/issues"
+  },
+  "homepage": "https://github.com/SaaS-To-Bentley/diver_builders/tree/main/diver_expo_builder#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "typescript": "^5.4.0"
