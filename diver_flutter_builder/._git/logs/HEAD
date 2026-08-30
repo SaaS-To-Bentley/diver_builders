@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c87a3a87ec7b656b5fcf7f06261c3bcc0a1e95f9 Mikkel Thygesen <Mikkelet@gmail.com> 1786905148 +0200	clone: from https://github.com/Mikkelet/diver_flutter_builder
+c87a3a87ec7b656b5fcf7f06261c3bcc0a1e95f9 f4442046d46f7b27707f3c1c0992d667c616f467 Mikkel Thygesen <Mikkelet@gmail.com> 1786905385 +0200	commit: Added api key validation
+f4442046d46f7b27707f3c1c0992d667c616f467 745b885c464ff2e4a06f1cae9579ae3080eeeddf Mikkel Thygesen <Mikkelet@gmail.com> 1786905411 +0200	commit: bumped version 0.1.6
+745b885c464ff2e4a06f1cae9579ae3080eeeddf 71a9a55d77c953d7a6886ddfd5c20393d35b1ddb Mikkel Thygesen <Mikkelet@gmail.com> 1788103455 +0200	commit: Add auto_route support to the builder alongside the existing go_router scanner

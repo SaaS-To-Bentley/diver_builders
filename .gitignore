@@ -1,0 +1,27 @@
+# Repo-wide ignores for the diver_builders monorepo.
+#
+# Each package keeps its own .gitignore for artifacts specific to its
+# toolchain (Gradle output in diver_android, node_modules in
+# diver_expo_builder, .dart_tool in diver_flutter_builder, .build in
+# diver_ios). This file only covers what can show up anywhere in the tree.
+
+# macOS
+.DS_Store
+.AppleDouble
+.Spotlight-V100
+.Trashes
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.iml
+*.swp
+*~
+
+# Local tool state
+.claude/settings.local.json
+
+# Local machine config and secrets
+.env
+.env.local
+local.properties

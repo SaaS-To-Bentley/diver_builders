@@ -1,0 +1,26 @@
+name: diver_flutter_builder
+description: >-
+  build_runner builder that aggregates go_router (@TypedGoRoute) and
+  auto_route (@AutoRouterConfig / @RoutePage) route URLs into a single
+  JSON file. Routes that need a runtime object a URL cannot carry are
+  excluded and instead recorded in diver/app_urls_errors.json as not
+  deeplink-safe.
+version: 0.1.6
+publish_to: "none"
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  analyzer: ">=8.0.0 <13.0.0"
+  build: ">=2.4.0 <5.0.0"
+  glob: ^2.1.0
+  source_gen: ">=3.0.0 <5.0.0"
+
+dev_dependencies:
+  http: ^1.0.0
+  flutter:
+    sdk: flutter
+
+executables:
+  upload_urls:

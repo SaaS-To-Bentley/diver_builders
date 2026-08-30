@@ -1,0 +1,7 @@
+Add auto_route support to the builder alongside the existing go_router scanner
+
+The builder now scans for both `@AutoRouterConfig()` routers and `@RoutePage()` pages in addition to `@TypedGoRoute` classes. A consuming app is expected to use one framework or the other; both are scanned unconditionally so nothing needs to be configured.
+
+For auto_route, paths are read from the router's `routes` getter via the resolved AST (AutoRoute has no const constructor), then matched back to their `@RoutePage()` class by explicit name or by stripping common suffixes. Parameters are resolved the way auto_route itself does at runtime: `@PathParam`/`@QueryParam` annotations win, then name-matching against `:segments`, with anything unclaimed and required blocking the route from `app_urls.json`.
+
+The existing `example/` directory is split into `example_go_router/` and `example_auto_route/`, each exercising its framework's full range of cases.

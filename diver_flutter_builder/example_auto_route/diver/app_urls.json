@@ -1,0 +1,73 @@
+{
+  "routes": [
+    {
+      "name": "books/:id",
+      "description": "",
+      "host": "books",
+      "path": ":id",
+      "query": [
+        {
+          "name": "preview",
+          "type": "boolean",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "dashboard",
+      "description": "",
+      "host": "dashboard",
+      "path": "",
+      "query": []
+    },
+    {
+      "name": "library/:shelf",
+      "description": "",
+      "host": "library",
+      "path": ":shelf",
+      "query": []
+    },
+    {
+      "name": "profile",
+      "description": "",
+      "host": "profile",
+      "path": "",
+      "query": []
+    },
+    {
+      "name": "Product search",
+      "description": "Full-text product search with optional paging and filtering.",
+      "host": "search",
+      "path": "",
+      "query": [
+        {
+          "name": "q",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "page",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "sort-order",
+          "type": "string",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "settings",
+      "description": "",
+      "host": "settings",
+      "path": "",
+      "query": []
+    }
+  ]
+}

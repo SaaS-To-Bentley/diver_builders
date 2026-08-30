@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "route": "CheckoutPage",
+      "path": "/checkout",
+      "extra": "Cart",
+      "reason": "Required constructor parameter `cart` (Cart) is not matched by name to a `:segment` in the route's path, and carries no explicit @PathParam or @QueryParam annotation claiming it as a URL value. auto_route allows passing a runtime object like this when navigating in-app, but a URL cannot carry it, so the route cannot be reached by a deeplink. Give it a default value, make it nullable, or add an @PathParam/@QueryParam annotation to allow URL navigation."
+    }
+  ]
+}
