@@ -50,9 +50,12 @@ host + path:
   (Android, iOS).
 - **path** — the remaining segments, with parameters as `:name`.
 - **query** — parameters that aren't part of the path. `type` is one of `string`,
-  `boolean`, or `list`; numbers map to `string` on every platform. `required` is false
-  whenever the app can construct the route without the value (a default or a nullable
-  type).
+  `boolean`, `list`, or `enum`; numbers map to `string` on every platform. An `enum`
+  parameter — one typed as the platform's enum — also carries `values`, the values it
+  takes in a URL, in declaration order:
+  `{ "name": "sort", "type": "enum", "values": ["newest", "price-low"] }`. `required`
+  is false whenever the app can construct the route without the value (a default or a
+  nullable type).
 - **name** / **description** — from the platform's metadata hook (`@DiverRoute`,
   `diverName`, an exported `diverRoute` constant), falling back to the derived
   `host/path` and an empty description.

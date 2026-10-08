@@ -28,7 +28,12 @@ public enum RouteJSON {
                 for (queryIndex, param) in route.query.enumerated() {
                     out += "        {\n"
                     out += "          \"name\": \(string(param.name)),\n"
-                    out += "          \"type\": \(string(param.type))\n"
+                    if param.values.isEmpty {
+                        out += "          \"type\": \(string(param.type))\n"
+                    } else {
+                        out += "          \"type\": \(string(param.type)),\n"
+                        out += "          \"values\": [" + param.values.map(string).joined(separator: ", ") + "]\n"
+                    }
                     out += "        }" + (queryIndex == route.query.count - 1 ? "\n" : ",\n")
                 }
                 out += "      ]\n"

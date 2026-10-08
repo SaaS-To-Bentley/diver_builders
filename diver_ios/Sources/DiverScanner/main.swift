@@ -3,6 +3,23 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
+// Walks Swift source, collecting every `enum` it declares, so a route property
+// typed as one can list the values it takes. Runs over all the sources before
+// any route is collected: a route may name an enum declared in a later file.
+final class EnumVisitor: SyntaxVisitor {
+    /// Keyed by the enum's simple name, which is all a property's type
+    /// annotation gives the scanner to match on — so two enums with the same
+    /// name in different scopes collide, and the last one scanned wins.
+    var enums: [String: [String]] = [:]
+
+    override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
+        if let values = enumValues(node) {
+            enums[node.name.text] = values
+        }
+        return .visitChildren
+    }
+}
+
 // Walks Swift source, collecting types that conform to `DiverRoute` and turning
 // each into a `RouteModel`. Syntax-only: it never type-checks, so an unknown
 // nominal property type is assumed URL-serializable (mapped to `string`); only
@@ -10,6 +27,14 @@ import SwiftSyntax
 final class RouteVisitor: SyntaxVisitor {
     var routes: [RouteModel] = []
     var skipped: [String] = []
+
+    /// What `EnumVisitor` found, by name.
+    private let enums: [String: [String]]
+
+    init(enums: [String: [String]]) {
+        self.enums = enums
+        super.init(viewMode: .sourceAccurate)
+    }
 
     override func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
         collect(name: node.name.text, inheritance: node.inheritanceClause, members: node.memberBlock.members)
@@ -37,7 +62,7 @@ final class RouteVisitor: SyntaxVisitor {
                 }
                 continue
             }
-            if let param = paramInfo(varDecl) {
+            if let param = paramInfo(varDecl, enums: enums) {
                 params.append(param)
             }
         }
@@ -74,7 +99,34 @@ private func stringConstant(_ varDecl: VariableDeclSyntax) -> (String, String)? 
     return (id, segment.content.text)
 }
 
-private func paramInfo(_ varDecl: VariableDeclSyntax) -> ParamInfo? {
+/// The values an enum takes in a URL: a `String`-backed enum's raw values
+/// (explicit, or the case name Swift gives it implicitly), any other enum's
+/// case names. Nil for an enum with an associated value anywhere, which is not
+/// one value a URL can carry.
+private func enumValues(_ node: EnumDeclSyntax) -> [String]? {
+    let stringBacked = node.inheritanceClause?.inheritedTypes.contains {
+        $0.type.as(IdentifierTypeSyntax.self)?.name.text == "String"
+    } ?? false
+
+    var values: [String] = []
+    for member in node.memberBlock.members {
+        guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
+        for element in caseDecl.elements {
+            if element.parameterClause != nil { return nil }
+            if stringBacked,
+               let literal = element.rawValue?.value.as(StringLiteralExprSyntax.self),
+               literal.segments.count == 1,
+               let segment = literal.segments.first?.as(StringSegmentSyntax.self) {
+                values.append(segment.content.text)
+            } else {
+                values.append(element.name.text)
+            }
+        }
+    }
+    return values.isEmpty ? nil : values
+}
+
+private func paramInfo(_ varDecl: VariableDeclSyntax, enums: [String: [String]]) -> ParamInfo? {
     guard let binding = varDecl.bindings.first else { return nil }
     if binding.accessorBlock != nil { return nil } // computed property
     guard let id = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text else { return nil }
@@ -82,12 +134,26 @@ private func paramInfo(_ varDecl: VariableDeclSyntax) -> ParamInfo? {
     let hasInitializer = binding.initializer != nil
     if let type = binding.typeAnnotation?.type {
         let (kind, optional) = typeKind(type)
-        return ParamInfo(name: id, type: RouteBuilder.diverType(kind), optional: optional || hasInitializer)
+        return paramInfo(id, kind: resolve(kind, enums: enums), optional: optional || hasInitializer)
     }
     if hasInitializer, let kind = literalKind(binding.initializer!.value) {
-        return ParamInfo(name: id, type: RouteBuilder.diverType(kind), optional: true)
+        return paramInfo(id, kind: resolve(kind, enums: enums), optional: true)
     }
     return nil
+}
+
+private func paramInfo(_ name: String, kind: SwiftTypeKind, optional: Bool) -> ParamInfo {
+    var values: [String] = []
+    if case .enumeration(let cases) = kind { values = cases }
+    return ParamInfo(name: name, type: RouteBuilder.diverType(kind), optional: optional, values: values)
+}
+
+/// A nominal type the sources declare as an enum, as that enum.
+private func resolve(_ kind: SwiftTypeKind, enums: [String: [String]]) -> SwiftTypeKind {
+    if case .nominal(let name) = kind, let values = enums[name] {
+        return .enumeration(values)
+    }
+    return kind
 }
 
 /// Reduces a type to a `SwiftTypeKind` and whether it is optional (`T?`).
@@ -100,6 +166,11 @@ private func typeKind(_ type: TypeSyntax) -> (SwiftTypeKind, Bool) {
     }
     if let ident = type.as(IdentifierTypeSyntax.self) {
         return ident.name.text == "Array" ? (.array, false) : (.nominal(ident.name.text), false)
+    }
+    // `Settings.Theme` — a type nested in another; the last name is the one
+    // its declaration goes by.
+    if let member = type.as(MemberTypeSyntax.self) {
+        return (.nominal(member.name.text), false)
     }
     if type.is(FunctionTypeSyntax.self) || type.is(TupleTypeSyntax.self) {
         return (.unsupported, false)
@@ -114,6 +185,11 @@ private func literalKind(_ expr: ExprSyntax) -> SwiftTypeKind? {
     if expr.is(FloatLiteralExprSyntax.self) { return .nominal("Double") }
     if expr.is(BooleanLiteralExprSyntax.self) { return .nominal("Bool") }
     if expr.is(ArrayExprSyntax.self) { return .array }
+    // `Theme.system` — an enum case, typed by the enum it is named through.
+    if let member = expr.as(MemberAccessExprSyntax.self),
+       let base = member.base?.as(DeclReferenceExprSyntax.self) {
+        return .nominal(base.baseName.text)
+    }
     return nil
 }
 
@@ -149,12 +225,19 @@ let inputPaths = arguments.enumerated()
     .filter { $0.offset != outputIndex && $0.offset != outputIndex + 1 }
     .map(\.element)
 
-let visitor = RouteVisitor(viewMode: .sourceAccurate)
-for input in inputPaths {
-    for file in swiftFiles(in: input) {
-        guard let source = try? String(contentsOf: URL(fileURLWithPath: file), encoding: .utf8) else { continue }
-        visitor.walk(Parser.parse(source: source))
-    }
+let trees = inputPaths.flatMap(swiftFiles(in:)).compactMap { file -> SourceFileSyntax? in
+    guard let source = try? String(contentsOf: URL(fileURLWithPath: file), encoding: .utf8) else { return nil }
+    return Parser.parse(source: source)
+}
+
+let enumVisitor = EnumVisitor(viewMode: .sourceAccurate)
+for tree in trees {
+    enumVisitor.walk(tree)
+}
+
+let visitor = RouteVisitor(enums: enumVisitor.enums)
+for tree in trees {
+    visitor.walk(tree)
 }
 
 let document = RouteJSON.encode(visitor.routes)

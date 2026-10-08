@@ -53,7 +53,13 @@ You can also run the app itself with `flutter run`.
       "query": [
         { "name": "term", "type": "string", "required": true },
         { "name": "page", "type": "string", "required": false },
-        { "name": "category", "type": "string", "required": false }
+        { "name": "category", "type": "string", "required": false },
+        {
+          "name": "sort",
+          "type": "enum",
+          "required": false,
+          "values": ["relevance", "price-low", "price-high"]
+        }
       ]
     },
     {

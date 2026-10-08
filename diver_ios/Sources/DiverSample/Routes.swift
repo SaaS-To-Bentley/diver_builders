@@ -21,6 +21,15 @@ struct Settings: DiverRoute, Codable, Hashable {
     var tab: String?
     var verbose: Bool = false
     var filters: [String] = []
+    // An enum becomes an `enum` query parameter listing its values — here the
+    // raw values, since it is String-backed.
+    var theme: Theme = .system
+
+    enum Theme: String, Codable {
+        case light
+        case dark
+        case system = "auto"
+    }
 }
 
 // No metadata -> name falls back to the derived URL (host/path).

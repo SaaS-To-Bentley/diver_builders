@@ -13,3 +13,8 @@ class Cart {
 
   final int itemCount;
 }
+
+/// A fixed set of choices. As a route parameter it becomes an `enum` query
+/// parameter, its `values` written the way go_router_builder puts them into a
+/// URL: each constant's name, kebab-cased.
+enum SortOrder { relevance, priceLow, priceHigh }

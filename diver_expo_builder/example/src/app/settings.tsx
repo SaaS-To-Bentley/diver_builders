@@ -7,14 +7,20 @@ export const diverRoute = defineDiverRoute({
   description: 'App settings, optionally opened on a specific tab',
 });
 
+// A union of string literals, inline or through a type alias or string enum
+// declared in this file, is an "enum" listing those values.
+type Theme = 'light' | 'dark' | 'system';
+
 // The builder reads query params from this type argument: string -> "string",
-// 'true' | 'false' -> "boolean", string[] -> "list". expo-router constrains
-// param values to string | string[], so booleans use the literal union form.
+// 'true' | 'false' -> "boolean", string[] -> "list", Theme -> "enum".
+// expo-router constrains param values to string | string[], so booleans use
+// the literal union form.
 export default function Settings() {
-  const { tab, verbose, filters } = useLocalSearchParams<{
+  const { tab, verbose, filters, theme } = useLocalSearchParams<{
     tab?: string;
     verbose?: 'true' | 'false';
     filters?: string[];
+    theme?: Theme;
   }>();
 
   return (
@@ -23,6 +29,7 @@ export default function Settings() {
       <Text>tab: {tab ?? '-'}</Text>
       <Text>verbose: {String(verbose ?? '-')}</Text>
       <Text>filters: {filters ? [filters].flat().join(', ') : '-'}</Text>
+      <Text>theme: {theme ?? '-'}</Text>
     </View>
   );
 }

@@ -7,7 +7,7 @@ A minimal Expo Router app demonstrating [`diver-expo-builder`](..). The routes i
 | `index.tsx` | Root route has no host | Skipped |
 | `_layout.tsx`, `+not-found.tsx` | Layouts and `+` specials | Skipped |
 | `profile.tsx` | `defineDiverRoute({ name, description })` metadata helper | `diverexample://profile` |
-| `settings.tsx` | `defineDiverRoute` + typed `useLocalSearchParams` → query params (`string`, `'true' \| 'false'` → boolean, `string[]` → list) | `diverexample://settings?tab=…` |
+| `settings.tsx` | `defineDiverRoute` + typed `useLocalSearchParams` → query params (`string`, `'true' \| 'false'` → boolean, `string[]` → list, a literal union → enum) | `diverexample://settings?tab=…` |
 | `products/index.tsx` | Plain-object `diverRoute` (no helper) + `index` collapses into its directory | `diverexample://products` |
 | `products/[id].tsx` | Dynamic segment; `id` excluded from query, `ref` kept | `diverexample://products/:id?ref=…` |
 | `docs/[...slug].tsx` | Catch-all segment | `diverexample://docs/:slug` |

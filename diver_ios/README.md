@@ -32,18 +32,22 @@ Routes are deduplicated by host+path and sorted by host then path.
 
 ### The syntax-only caveat
 
-The scanner parses source — it does **not** type-check — so it can't tell an `enum` from an arbitrary `struct`. An unknown nominal type is therefore assumed to be a URL-serializable scalar and mapped to `string`. In practice this is fine: SwiftUI routes are `Codable`, so their properties are already serializable. If a route genuinely isn't deeplink-safe, simply don't conform it to `DiverRoute`.
+The scanner parses source — it does **not** type-check — so it only knows a type is an `enum` when it has scanned that enum's declaration; it matches on the simple name, so it finds enums nested in other types too. Any other unknown nominal type is assumed to be a URL-serializable scalar and mapped to `string`. In practice this is fine: SwiftUI routes are `Codable`, so their properties are already serializable. If a route genuinely isn't deeplink-safe, simply don't conform it to `DiverRoute`.
 
 ### Query parameter types
 
 | Swift type | Diver type |
 | --- | --- |
-| `String`, `Int`, `Double`, `Character`, an `enum`, any other nominal type | `string` |
+| `String`, `Int`, `Double`, `Character`, any other nominal type | `string` |
 | `Bool` | `boolean` |
 | `[T]` / `Array<T>` | `list` |
+| an `enum` declared in the scanned sources, without associated values | `enum` |
 | closure / tuple | route skipped |
 
-Numbers map to `string`, matching the other Diver builders.
+Numbers map to `string`, matching the other Diver builders. An `enum` param also lists
+`values`: a `String`-backed enum's raw values, any other enum's case names. An enum
+declared outside the scanned paths (say, in another package) is not seen and maps to
+`string`.
 
 ## Installation
 
