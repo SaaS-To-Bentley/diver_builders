@@ -45,6 +45,13 @@ mixin $SearchRoute on GoRouteData {
     term: state.uri.queryParameters['term']!,
     page: _$convertMapValue('page', state.uri.queryParameters, int.parse) ?? 1,
     category: state.uri.queryParameters['category'],
+    sort:
+        _$convertMapValue(
+          'sort',
+          state.uri.queryParameters,
+          _$SortOrderEnumMap._$fromName,
+        ) ??
+        SortOrder.relevance,
   );
 
   SearchRoute get _self => this as SearchRoute;
@@ -56,6 +63,8 @@ mixin $SearchRoute on GoRouteData {
       'term': _self.term,
       if (_self.page != 1) 'page': _self.page.toString(),
       if (_self.category != null) 'category': _self.category,
+      if (_self.sort != SortOrder.relevance)
+        'sort': _$SortOrderEnumMap[_self.sort],
     },
   );
 
@@ -73,6 +82,12 @@ mixin $SearchRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
+const _$SortOrderEnumMap = {
+  SortOrder.relevance: 'relevance',
+  SortOrder.priceLow: 'price-low',
+  SortOrder.priceHigh: 'price-high',
+};
+
 T? _$convertMapValue<T>(
   String key,
   Map<String, String> map,
@@ -80,6 +95,11 @@ T? _$convertMapValue<T>(
 ) {
   final value = map[key];
   return value == null ? null : converter(value);
+}
+
+extension<T extends Enum> on Map<T, String> {
+  T? _$fromName(String? value) =>
+      entries.where((element) => element.value == value).firstOrNull?.key;
 }
 
 RouteBase get $userRoute =>

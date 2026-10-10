@@ -34,6 +34,16 @@
           "name": "category",
           "type": "string",
           "required": false
+        },
+        {
+          "name": "sort",
+          "type": "enum",
+          "required": false,
+          "values": [
+            "relevance",
+            "price-low",
+            "price-high"
+          ]
         }
       ]
     },

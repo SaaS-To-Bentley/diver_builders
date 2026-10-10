@@ -3,27 +3,34 @@ import Foundation
 /// A single stored property of a route type.
 public struct ParamInfo: Equatable {
     public let name: String
-    /// Diver query type (`string` / `boolean` / `list`), or nil when the type
-    /// is not URL-serializable (a closure or tuple) — such routes are skipped.
+    /// Diver query type (`string` / `boolean` / `list` / `enum`), or nil when
+    /// the type is not URL-serializable (a closure or tuple) — such routes are
+    /// skipped.
     public let type: String?
     /// Optional properties (a default value or an optional type) become query
     /// parameters; required properties become path segments.
     public let optional: Bool
+    /// An `enum` property's values, as they appear in the URL. Empty otherwise.
+    public let values: [String]
 
-    public init(name: String, type: String?, optional: Bool) {
+    public init(name: String, type: String?, optional: Bool, values: [String] = []) {
         self.name = name
         self.type = type
         self.optional = optional
+        self.values = values
     }
 }
 
 public struct QueryParam: Equatable {
     public let name: String
     public let type: String
+    /// The values an `enum` parameter can take; empty for every other type.
+    public let values: [String]
 
-    public init(name: String, type: String) {
+    public init(name: String, type: String, values: [String] = []) {
         self.name = name
         self.type = type
+        self.values = values
     }
 }
 
@@ -45,10 +52,12 @@ public struct RouteModel: Equatable {
 
 /// A property's type, reduced from Swift syntax to what Diver cares about.
 /// Because the scanner is syntax-only (no type resolution), an unknown nominal
-/// type is assumed to be a URL-serializable scalar (e.g. an enum) and mapped to
-/// `string`; only closures/tuples are treated as unsupported.
+/// type is assumed to be a URL-serializable scalar and mapped to `string`; only
+/// closures/tuples are treated as unsupported. A nominal type the scanner did
+/// find an `enum` declaration for is an `enumeration` with that enum's values.
 public enum SwiftTypeKind: Equatable {
     case nominal(String)
+    case enumeration([String])
     case array
     case unsupported
 }
@@ -62,6 +71,8 @@ public enum RouteBuilder {
             return "list"
         case .unsupported:
             return nil
+        case .enumeration:
+            return "enum"
         case .nominal(let name):
             return booleanTypes.contains(name) ? "boolean" : "string"
         }
@@ -96,7 +107,7 @@ public enum RouteBuilder {
         let queryParams = params.filter { $0.optional }
 
         let path = pathParams.map { ":" + kebabCase($0.name) }.joined(separator: "/")
-        let query = queryParams.map { QueryParam(name: kebabCase($0.name), type: $0.type!) }
+        let query = queryParams.map { QueryParam(name: kebabCase($0.name), type: $0.type!, values: $0.values) }
 
         let fallback = path.isEmpty ? host : "\(host)/\(path)"
         return RouteModel(

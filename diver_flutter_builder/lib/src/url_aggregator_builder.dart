@@ -290,6 +290,9 @@ class UrlAggregatorBuilder implements Builder {
         name: _toKebabCase(name),
         type: _jsonType(parameter.type),
         isRequired: !_isOptionalParameter(parameter),
+        // go_router_builder writes an enum into the URL as its constant's
+        // name, kebab-cased (`SortOrder.priceLow` -> `price-low`).
+        values: _enumValues(parameter.type, kebabCase: true),
       ));
     }
     return params;
@@ -579,6 +582,9 @@ class UrlAggregatorBuilder implements Builder {
         name: wireName,
         type: _jsonType(parameter.type),
         isRequired: required,
+        // auto_route has no enum codec of its own, so the value is the
+        // constant's plain `name` — what `Enum.values.byName` reads back.
+        values: _enumValues(parameter.type, kebabCase: false),
       ));
     }
     return (query: params, blocking: null);
@@ -645,8 +651,21 @@ class UrlAggregatorBuilder implements Builder {
     if (type.isDartCoreDouble) return 'string';
     if (type.isDartCoreNum) return 'string';
     if (type.isDartCoreList) return 'list';
-    if (type.element is EnumElement) return 'string';
+    if (type.element is EnumElement) return 'enum';
     return type.getDisplayString().toLowerCase();
+  }
+
+  /// The values an enum-typed parameter can take, in declaration order — one
+  /// per constant, written the way the router puts it into a URL. Empty for
+  /// any other type.
+  List<String> _enumValues(DartType type, {required bool kebabCase}) {
+    final element = type.element;
+    if (element is! EnumElement) return const [];
+    return [
+      for (final field in element.fields)
+        if (field.isEnumConstant && field.name != null)
+          kebabCase ? _toKebabCase(field.name!) : field.name!,
+    ];
   }
 }
 
@@ -698,10 +717,19 @@ class _Route {
 }
 
 class _Param {
-  _Param({required this.name, required this.type, required this.isRequired});
+  _Param({
+    required this.name,
+    required this.type,
+    required this.isRequired,
+    this.values = const [],
+  });
 
   final String name;
   final String type;
+
+  /// The values an `enum` parameter can take. Empty for every other type,
+  /// and then left out of the JSON.
+  final List<String> values;
 
   /// Whether the caller must supply this query parameter, i.e. it has no
   /// default value and its type is non-nullable.
@@ -711,6 +739,7 @@ class _Param {
         'name': name,
         'type': type,
         'required': isRequired,
+        if (values.isNotEmpty) 'values': values,
       };
 }
 

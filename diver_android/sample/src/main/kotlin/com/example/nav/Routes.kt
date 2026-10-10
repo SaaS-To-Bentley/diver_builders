@@ -12,7 +12,14 @@ data object Home
 data class Profile(val userId: String)
 
 @DiverRoute(name = "Settings", description = "App settings")
-data class Settings(val tab: String? = null, val verbose: Boolean = false)
+data class Settings(
+    val tab: String? = null,
+    val verbose: Boolean = false,
+    // An enum becomes an `enum` query parameter listing its entries.
+    val theme: Theme = Theme.System,
+)
+
+enum class Theme { Light, Dark, System }
 
 // No metadata -> name falls back to the derived URL (host/path).
 @DiverRoute

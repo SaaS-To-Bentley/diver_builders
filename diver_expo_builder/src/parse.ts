@@ -7,7 +7,20 @@ export interface DiverRouteMeta {
 
 export interface QueryParam {
   name: string;
-  type: 'string' | 'boolean' | 'list';
+  type: 'string' | 'boolean' | 'list' | 'enum';
+  /** The values an `enum` parameter can take; absent for every other type. */
+  values?: string[];
+}
+
+type ParamType = Omit<QueryParam, 'name'>;
+
+/// What the file declares that a parameter's type can refer to by name: type
+/// aliases (`type Sort = 'new' | 'old'`) and TypeScript enums. Only the route
+/// file's own declarations — a type imported from elsewhere is not followed,
+/// and reads as a plain string.
+interface LocalTypes {
+  aliases: Map<string, ts.TypeNode>;
+  enums: Map<string, string[]>;
 }
 
 export interface ParsedRouteFile {
@@ -104,6 +117,7 @@ function stringProperty(object: ts.ObjectLiteralExpression, name: string): strin
 function readSearchParams(sourceFile: ts.SourceFile): QueryParam[] {
   const params: QueryParam[] = [];
   const seen = new Set<string>();
+  const locals = readLocalTypes(sourceFile);
 
   const visit = (node: ts.Node): void => {
     if (
@@ -121,7 +135,7 @@ function readSearchParams(sourceFile: ts.SourceFile): QueryParam[] {
             : null;
           if (name === null || seen.has(name)) continue;
           seen.add(name);
-          params.push({ name, type: jsonType(member.type) });
+          params.push({ name, ...jsonType(member.type, locals) });
         }
       }
     }
@@ -132,16 +146,52 @@ function readSearchParams(sourceFile: ts.SourceFile): QueryParam[] {
   return params;
 }
 
-function jsonType(node: ts.TypeNode | undefined): QueryParam['type'] {
-  if (!node) return 'string';
-  if (node.kind === ts.SyntaxKind.BooleanKeyword) return 'boolean';
-  if (ts.isArrayTypeNode(node)) return 'list';
-  if (
-    ts.isTypeReferenceNode(node) &&
-    ts.isIdentifier(node.typeName) &&
-    node.typeName.text === 'Array'
-  ) {
-    return 'list';
+function readLocalTypes(sourceFile: ts.SourceFile): LocalTypes {
+  const aliases = new Map<string, ts.TypeNode>();
+  const enums = new Map<string, string[]>();
+
+  for (const statement of sourceFile.statements) {
+    if (ts.isTypeAliasDeclaration(statement)) {
+      aliases.set(statement.name.text, statement.type);
+    } else if (ts.isEnumDeclaration(statement)) {
+      // A string enum's values are what goes into the URL; a member without a
+      // string initializer goes by its name.
+      enums.set(
+        statement.name.text,
+        statement.members.map((member) =>
+          member.initializer && ts.isStringLiteral(member.initializer)
+            ? member.initializer.text
+            : member.name.getText(sourceFile),
+        ),
+      );
+    }
+  }
+  return { aliases, enums };
+}
+
+function jsonType(
+  node: ts.TypeNode | undefined,
+  locals: LocalTypes,
+  resolving: Set<string> = new Set(),
+): ParamType {
+  if (!node) return { type: 'string' };
+  if (node.kind === ts.SyntaxKind.BooleanKeyword) return { type: 'boolean' };
+  if (ts.isArrayTypeNode(node)) return { type: 'list' };
+  if (ts.isParenthesizedTypeNode(node)) return jsonType(node.type, locals, resolving);
+  if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
+    const name = node.typeName.text;
+    if (name === 'Array') return { type: 'list' };
+
+    const values = locals.enums.get(name);
+    if (values && values.length > 0) return { type: 'enum', values };
+
+    // `resolving` guards a self-referencing alias, which TypeScript itself
+    // rejects but a file mid-edit can still contain.
+    const alias = locals.aliases.get(name);
+    if (alias && !resolving.has(name)) {
+      return jsonType(alias, locals, new Set(resolving).add(name));
+    }
+    return { type: 'string' };
   }
   if (ts.isUnionTypeNode(node)) {
     const members = node.types.filter(
@@ -150,12 +200,17 @@ function jsonType(node: ts.TypeNode | undefined): QueryParam['type'] {
     // expo-router constrains param values to string | string[], so booleans
     // are conventionally typed as a 'true' | 'false' literal union.
     if (members.length > 0 && members.every(isBooleanLiteralString)) {
-      return 'boolean';
+      return { type: 'boolean' };
     }
-    const types = members.map(jsonType);
-    if (types.includes('list')) return 'list';
-    if (types.includes('boolean')) return 'boolean';
-    return 'string';
+    // Any other union made only of string literals is a fixed set of values.
+    const literals = members.map(stringLiteralText);
+    if (members.length > 0 && literals.every((literal) => literal !== null)) {
+      return { type: 'enum', values: [...new Set(literals as string[])] };
+    }
+    const types = members.map((member) => jsonType(member, locals, resolving));
+    if (types.some((member) => member.type === 'list')) return { type: 'list' };
+    if (types.some((member) => member.type === 'boolean')) return { type: 'boolean' };
+    return { type: 'string' };
   }
   if (ts.isLiteralTypeNode(node)) {
     const literal = node.literal;
@@ -163,10 +218,16 @@ function jsonType(node: ts.TypeNode | undefined): QueryParam['type'] {
       literal.kind === ts.SyntaxKind.TrueKeyword ||
       literal.kind === ts.SyntaxKind.FalseKeyword
     ) {
-      return 'boolean';
+      return { type: 'boolean' };
     }
   }
-  return 'string';
+  return { type: 'string' };
+}
+
+function stringLiteralText(node: ts.TypeNode): string | null {
+  return ts.isLiteralTypeNode(node) && ts.isStringLiteral(node.literal)
+    ? node.literal.text
+    : null;
 }
 
 function isBooleanLiteralString(node: ts.TypeNode): boolean {

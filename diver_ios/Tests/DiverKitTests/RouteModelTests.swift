@@ -16,6 +16,7 @@ final class RouteModelTests: XCTestCase {
         XCTAssertEqual(RouteBuilder.diverType(.nominal("Bool")), "boolean")
         XCTAssertEqual(RouteBuilder.diverType(.nominal("Tab")), "string") // unknown -> string
         XCTAssertEqual(RouteBuilder.diverType(.array), "list")
+        XCTAssertEqual(RouteBuilder.diverType(.enumeration(["a", "b"])), "enum")
         XCTAssertNil(RouteBuilder.diverType(.unsupported))
     }
 
@@ -87,5 +88,30 @@ final class RouteModelTests: XCTestCase {
         let query = settings["query"] as! [[String: Any]]
         XCTAssertEqual(query[0]["name"] as? String, "tab")
         XCTAssertEqual(query[0]["type"] as? String, "string")
+    }
+
+    func testEnumQueryParamCarriesItsValues() throws {
+        let route = RouteBuilder.build(
+            simpleName: "Search",
+            name: "",
+            description: "",
+            params: [ParamInfo(name: "sort", type: "enum", optional: true, values: ["newest", "price"])]
+        )!
+        XCTAssertEqual(route.query, [QueryParam(name: "sort", type: "enum", values: ["newest", "price"])])
+
+        let data = Data(RouteJSON.encode([route]).utf8)
+        let root = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let query = (root["routes"] as! [[String: Any]])[0]["query"] as! [[String: Any]]
+        XCTAssertEqual(query[0]["type"] as? String, "enum")
+        XCTAssertEqual(query[0]["values"] as? [String], ["newest", "price"])
+    }
+
+    func testValuesAreLeftOutForOtherTypes() throws {
+        let routes = [RouteModel(name: "s", description: "", host: "s", path: "",
+                                 query: [QueryParam(name: "tab", type: "string")])]
+        let data = Data(RouteJSON.encode(routes).utf8)
+        let root = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let query = (root["routes"] as! [[String: Any]])[0]["query"] as! [[String: Any]]
+        XCTAssertNil(query[0]["values"])
     }
 }

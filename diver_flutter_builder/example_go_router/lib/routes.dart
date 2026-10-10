@@ -33,6 +33,8 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 ///        { name: "term",     required: true  },  // non-null, no default
 ///        { name: "page",     required: false },  // has a default
 ///        { name: "category", required: false },  // nullable
+///        { name: "sort", type: "enum", values: ["relevance", "price-low",
+///          "price-high"], required: false },      // an enum, with a default
 ///      ]
 @DiverRoute(
   name: 'Product search',
@@ -40,11 +42,17 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 )
 @TypedGoRoute<SearchRoute>(path: '/search')
 class SearchRoute extends GoRouteData with $SearchRoute {
-  const SearchRoute({required this.term, this.page = 1, this.category});
+  const SearchRoute({
+    required this.term,
+    this.page = 1,
+    this.category,
+    this.sort = SortOrder.relevance,
+  });
 
   final String term;
   final int page;
   final String? category;
+  final SortOrder sort;
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>

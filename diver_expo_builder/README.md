@@ -85,7 +85,7 @@ export default function Settings() {
 }
 ```
 
-Types map to `string`, `boolean`, or `list`: arrays become `list`, and a `'true' | 'false'` literal union (or the `boolean` keyword) becomes `boolean` — expo-router constrains param values to `string | string[]`, so the literal union is the form that typechecks. Everything else falls back to `string`. Params that match a dynamic path segment (e.g. `id` in `app/user/[id].tsx`) are excluded from the query list. Untyped `useLocalSearchParams()` calls contribute no query params.
+Types map to `string`, `boolean`, `list`, or `enum`: arrays become `list`, and a `'true' | 'false'` literal union (or the `boolean` keyword) becomes `boolean` — expo-router constrains param values to `string | string[]`, so the literal union is the form that typechecks. Any other union of string literals (`'newest' | 'price'`) becomes `enum`, with those literals as its `values`; so does a type alias or TypeScript `enum` declared in the route file itself (a string enum's values, otherwise its member names). Types imported from another file are not followed. Everything else falls back to `string`. Params that match a dynamic path segment (e.g. `id` in `app/user/[id].tsx`) are excluded from the query list. Untyped `useLocalSearchParams()` calls contribute no query params.
 
 ### Example
 

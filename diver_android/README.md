@@ -32,12 +32,15 @@ Routes are deduplicated by host+path and sorted by host then path.
 
 | Kotlin type | Diver type |
 | --- | --- |
-| `String`, `Int`, `Long`, `Short`, `Byte`, `Float`, `Double`, `Char`, enum | `string` |
+| `String`, `Int`, `Long`, `Short`, `Byte`, `Float`, `Double`, `Char` | `string` |
 | `Boolean` | `boolean` |
 | `List`, `MutableList`, `Array` | `list` |
+| `enum class` | `enum` |
 | anything else | route skipped |
 
-Numbers map to `string`, matching the other Diver builders.
+Numbers map to `string`, matching the other Diver builders. An `enum` param also lists its
+entries as `values`, written the way Navigation puts them into a URL: each entry's
+`@SerialName` when it has one, its name otherwise.
 
 ## Installation
 
